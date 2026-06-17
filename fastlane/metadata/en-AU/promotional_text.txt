@@ -1,0 +1,1 @@
+Healthcare analytics workbench for KPIs, cohorts, quality signals, explainable insights, and report-ready summaries.
