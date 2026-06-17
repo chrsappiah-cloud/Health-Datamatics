@@ -1,0 +1,21 @@
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Local IDE and assistant state
+.idea/
+.codebuddy/
+
+# macOS
+.DS_Store
+
+# Archives and exports
+*.xcarchive
+ExportOptions.plist

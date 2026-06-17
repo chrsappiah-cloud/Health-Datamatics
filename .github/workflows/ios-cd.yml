@@ -1,0 +1,42 @@
+name: iOS CD
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ios-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    name: Archive release candidate
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build unsigned archive
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project Health-Datamatics.xcodeproj \
+            -scheme Health-Datamatics \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Health-Datamatics.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Health-Datamatics.xcarchive
+          path: ${{ runner.temp }}/Health-Datamatics.xcarchive
+          if-no-files-found: error
+          retention-days: 14
