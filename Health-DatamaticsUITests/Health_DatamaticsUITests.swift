@@ -10,27 +10,42 @@ import XCTest
 final class Health_DatamaticsUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testWorkbenchTabsAndReportsScreen() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        XCTAssertTrue(app.tabBars.buttons["Dashboard"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.scrollViews["dashboard-screen"].waitForExistence(timeout: 5))
+
+        app.tabBars.buttons["Quality"].tap()
+        XCTAssertTrue(app.scrollViews["quality-screen"].waitForExistence(timeout: 5))
+
+        app.tabBars.buttons["Insights"].tap()
+        XCTAssertTrue(app.scrollViews["insights-screen"].waitForExistence(timeout: 5))
+
+        openTab(named: "Reports", in: app)
+        XCTAssertTrue(app.scrollViews["reports-screen"].waitForExistence(timeout: 5))
+
+        openTab(named: "Integrations", in: app)
+        XCTAssertTrue(app.scrollViews["integrations-screen"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    private func openTab(named name: String, in app: XCUIApplication) {
+        if app.tabBars.buttons[name].exists {
+            app.tabBars.buttons[name].tap()
+            return
+        }
+
+        app.tabBars.buttons["More"].tap()
+        let tableLabel = app.tables.staticTexts[name]
+        if tableLabel.waitForExistence(timeout: 5) {
+            tableLabel.tap()
+        }
     }
 
     @MainActor

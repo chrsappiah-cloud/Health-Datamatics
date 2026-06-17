@@ -62,7 +62,8 @@ struct ContentView: View {
                 Label("Architecture", systemImage: "map")
             }
         }
-        .tint(.teal)
+        .tint(.cyan)
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -120,7 +121,8 @@ private struct DashboardView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("dashboard-screen")
+        .workbenchBackground()
         .navigationTitle("Dashboard")
         .navigationBarTitleDisplayMode(.large)
     }
@@ -151,7 +153,8 @@ private struct PatientsView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("patients-screen")
+        .workbenchBackground()
         .navigationTitle("Patients")
     }
 }
@@ -175,7 +178,8 @@ private struct DataQualityView: View {
                             }
 
                             ProgressView(value: Double(workbench.qualitySnapshot.overallScore), total: 100)
-                                .tint(.teal)
+                                .tint(.cyan)
+        .preferredColorScheme(.dark)
                         }
 
                         StatLine(label: "Warehouse lineage", value: workbench.qualitySnapshot.warehouseCoverage)
@@ -202,7 +206,8 @@ private struct DataQualityView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("quality-screen")
+        .workbenchBackground()
         .navigationTitle("Data Quality")
     }
 }
@@ -239,7 +244,8 @@ private struct InsightsView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("insights-screen")
+        .workbenchBackground()
         .navigationTitle("Insights")
     }
 }
@@ -251,6 +257,7 @@ private struct ReportsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 SectionHeader(title: "Report generation", subtitle: "Executive, clinical, and stewardship-ready exports")
+                    .accessibilityIdentifier("reports-generation")
 
                 VStack(spacing: 12) {
                     ForEach(workbench.reports) { report in
@@ -260,7 +267,8 @@ private struct ReportsView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("reports-screen")
+        .workbenchBackground()
         .navigationTitle("Reports")
     }
 }
@@ -290,7 +298,8 @@ private struct IntegrationsView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("integrations-screen")
+        .workbenchBackground()
         .navigationTitle("Integrations")
     }
 }
@@ -323,7 +332,8 @@ private struct ArchitectureMapView: View {
             }
             .padding(20)
         }
-        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("architecture-screen")
+        .workbenchBackground()
         .navigationTitle("Architecture")
     }
 }
@@ -334,28 +344,58 @@ private struct HeroCard: View {
     let tag: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(tag.uppercased())
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.teal)
-
-            Text(title)
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-
-            Text(subtitle)
-                .font(.body)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(
+        ZStack(alignment: .leading) {
             LinearGradient(
-                colors: [Color.teal.opacity(0.18), Color.blue.opacity(0.12)],
+                colors: [Color.cyan.opacity(0.30), Color.indigo.opacity(0.22), Color.black.opacity(0.10)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+
+            HStack(spacing: 18) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 82, height: 82)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .stroke(.white.opacity(0.24), lineWidth: 1)
+                        )
+
+                    Image(systemName: "cross.case.fill")
+                        .font(.system(size: 36, weight: .semibold))
+                        .foregroundStyle(.white, .cyan)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(tag.uppercased())
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.cyan)
+
+                    Text(title)
+                        .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        .foregroundStyle(.white)
+
+                    Text(subtitle)
+                        .font(.callout)
+                        .foregroundStyle(.white.opacity(0.78))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(22)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(alignment: .bottomTrailing) {
+            Image(systemName: "waveform.path.ecg")
+                .font(.system(size: 96, weight: .light))
+                .foregroundStyle(.white.opacity(0.10))
+                .padding(20)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(.white.opacity(0.20), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .cyan.opacity(0.18), radius: 24, y: 12)
     }
 }
 
@@ -377,8 +417,7 @@ private struct ArchitectureMappingCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -408,8 +447,7 @@ private struct MetricCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
         .shadow(color: .black.opacity(0.04), radius: 10, y: 4)
     }
 }
@@ -448,9 +486,7 @@ private struct SectionCard<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: .black.opacity(0.04), radius: 10, y: 4)
+        .premiumCard(cornerRadius: 22)
     }
 }
 
@@ -483,8 +519,7 @@ private struct AlertRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .premiumCard(cornerRadius: 18)
     }
 }
 
@@ -506,8 +541,7 @@ private struct CohortCard: View {
         }
         .frame(width: 220, alignment: .leading)
         .padding(16)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -535,8 +569,7 @@ private struct PatientCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -561,8 +594,7 @@ private struct QualityCheckCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -593,8 +625,7 @@ private struct GovernanceControlCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -622,8 +653,7 @@ private struct WorkflowStageCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -651,8 +681,7 @@ private struct InsightCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -682,8 +711,7 @@ private struct TrendSignalRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .premiumCard(cornerRadius: 18)
     }
 }
 
@@ -718,8 +746,7 @@ private struct ReportCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -770,8 +797,7 @@ private struct IntegrationCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .premiumCard(cornerRadius: 20)
     }
 }
 
@@ -802,6 +828,36 @@ private struct StatLine: View {
             Text(value)
                 .font(.subheadline)
         }
+    }
+}
+
+
+private extension View {
+    func workbenchBackground() -> some View {
+        background {
+            ZStack {
+                LinearGradient(
+                    colors: [Color(red: 0.02, green: 0.05, blue: 0.08), Color(red: 0.03, green: 0.11, blue: 0.13), Color(red: 0.06, green: 0.06, blue: 0.16)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Image(systemName: "dot.radiowaves.left.and.right")
+                    .font(.system(size: 180, weight: .ultraLight))
+                    .foregroundStyle(.cyan.opacity(0.035))
+                    .offset(x: 120, y: -260)
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    func premiumCard(cornerRadius: CGFloat) -> some View {
+        background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(.white.opacity(0.12), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
     }
 }
 
