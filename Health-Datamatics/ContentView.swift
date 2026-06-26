@@ -42,6 +42,13 @@ struct ContentView: View {
             }
 
             NavigationStack {
+                ToolsView()
+            }
+            .tabItem {
+                Label("Tools", systemImage: "slider.horizontal.3")
+            }
+
+            NavigationStack {
                 ReportsView(workbench: workbench)
             }
             .tabItem {
@@ -56,10 +63,10 @@ struct ContentView: View {
             }
 
             NavigationStack {
-                ArchitectureMapView(workbench: workbench)
+                AboutAccessView(workbench: workbench)
             }
             .tabItem {
-                Label("Architecture", systemImage: "map")
+                Label("Access", systemImage: "person.crop.circle.badge.checkmark")
             }
         }
         .tint(.cyan)
@@ -250,6 +257,128 @@ private struct InsightsView: View {
     }
 }
 
+private struct ToolsView: View {
+    @State private var followUpComplete = true
+    @State private var medicationReconciled = false
+    @State private var priorAdmissions = 2.0
+    @State private var abnormalLabs = 3.0
+    @State private var missingFields = 7.0
+    @State private var duplicateRows = 3.0
+    @State private var codedRows = 84.0
+    @State private var selectedCode = "8480-6"
+    @State private var reportAudience = "Clinical directors"
+    @State private var includeQualityAppendix = true
+
+    private let codeMap: [String: (name: String, system: String, use: String)] = [
+        "8480-6": ("Systolic blood pressure", "LOINC", "Vitals trend monitoring"),
+        "4548-4": ("Hemoglobin A1c", "LOINC", "Diabetes cohort control"),
+        "I50.9": ("Heart failure, unspecified", "ICD-10-CM", "Readmission cohort inclusion"),
+        "38341003": ("Hypertensive disorder", "SNOMED CT", "Problem-list normalization")
+    ]
+
+    private var riskScore: Int {
+        var score = Int(priorAdmissions * 12 + abnormalLabs * 7)
+        score += followUpComplete ? -14 : 16
+        score += medicationReconciled ? -10 : 12
+        return min(max(score, 5), 96)
+    }
+
+    private var qualityScore: Int {
+        let penalty = Int(missingFields * 2 + duplicateRows * 4 + max(0, 95 - codedRows))
+        return min(max(100 - penalty, 0), 100)
+    }
+
+    private var riskBand: (title: String, color: Color, action: String) {
+        switch riskScore {
+        case 70...:
+            return ("High", .red, "Schedule nurse navigator outreach within 24 hours and verify discharge medications.")
+        case 40..<70:
+            return ("Moderate", .orange, "Confirm follow-up appointment and review abnormal-result queue.")
+        default:
+            return ("Low", .teal, "Continue standard pathway and monitor the next scheduled encounter.")
+        }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                SectionHeader(title: "Public analytics tools", subtitle: "Use built-in calculators and templates without an account, invitation, or paid subscription")
+
+                SectionCard(title: "Readmission risk estimator", subtitle: "Adjust care-transition signals and see an explainable recommendation") {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Toggle("Follow-up booked", isOn: $followUpComplete)
+                        Toggle("Medication reconciliation complete", isOn: $medicationReconciled)
+                        SliderControl(title: "Prior admissions", value: $priorAdmissions, range: 0...6, format: "%.0f")
+                        SliderControl(title: "Abnormal lab flags", value: $abnormalLabs, range: 0...8, format: "%.0f")
+
+                        ResultBand(title: "\(riskScore)% \(riskBand.title) risk", detail: riskBand.action, color: riskBand.color)
+                    }
+                }
+
+                SectionCard(title: "Dataset quality scorer", subtitle: "Model missingness, duplicates, and coding coverage before releasing a dashboard") {
+                    VStack(alignment: .leading, spacing: 16) {
+                        SliderControl(title: "Missing required fields", value: $missingFields, range: 0...20, format: "%.0f")
+                        SliderControl(title: "Potential duplicate rows", value: $duplicateRows, range: 0...12, format: "%.0f")
+                        SliderControl(title: "Terminology coverage", value: $codedRows, range: 60...100, format: "%.0f%%")
+
+                        ProgressView(value: Double(qualityScore), total: 100)
+                            .tint(qualityScore >= 85 ? .teal : qualityScore >= 70 ? .orange : .red)
+
+                        ResultBand(
+                            title: "\(qualityScore)% release readiness",
+                            detail: qualityScore >= 85 ? "Ready for stakeholder review with routine steward sign-off." : "Hold release and remediate the highest-impact quality findings.",
+                            color: qualityScore >= 85 ? .teal : .orange
+                        )
+                    }
+                }
+
+                SectionCard(title: "Terminology mapper", subtitle: "Look up common healthcare codes used by the sample analytics workflows") {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Picker("Code", selection: $selectedCode) {
+                            ForEach(codeMap.keys.sorted(), id: \.self) { code in
+                                Text(code).tag(code)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        if let item = codeMap[selectedCode] {
+                            StatLine(label: "Display", value: item.name)
+                            StatLine(label: "Code system", value: item.system)
+                            StatLine(label: "Analytics use", value: item.use)
+                        }
+                    }
+                }
+
+                SectionCard(title: "Report assembler", subtitle: "Preview the sections a user can generate from app content") {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Picker("Audience", selection: $reportAudience) {
+                            Text("Clinical directors").tag("Clinical directors")
+                            Text("Executives").tag("Executives")
+                            Text("Data stewards").tag("Data stewards")
+                        }
+                        .pickerStyle(.menu)
+
+                        Toggle("Include quality appendix", isOn: $includeQualityAppendix)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            ReportLine(number: 1, title: "\(reportAudience) summary")
+                            ReportLine(number: 2, title: "Risk trends and cohort movement")
+                            ReportLine(number: 3, title: "Recommended actions with rationale")
+                            if includeQualityAppendix {
+                                ReportLine(number: 4, title: "Data quality appendix and steward notes")
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(20)
+        }
+        .accessibilityIdentifier("tools-screen")
+        .workbenchBackground()
+        .navigationTitle("Tools")
+    }
+}
+
 private struct ReportsView: View {
     let workbench: AnalyticsWorkbench
 
@@ -301,6 +430,58 @@ private struct IntegrationsView: View {
         .accessibilityIdentifier("integrations-screen")
         .workbenchBackground()
         .navigationTitle("Integrations")
+    }
+}
+
+private struct AboutAccessView: View {
+    let workbench: AnalyticsWorkbench
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HeroCard(
+                    title: "Health-Datamatics",
+                    subtitle: "A public healthcare analytics reference app with sample dashboards, calculators, quality checks, interoperability examples, and report-building workflows.",
+                    tag: "Public app access"
+                )
+
+                SectionCard(title: "Who can use this app?", subtitle: "Designed for the general public and healthcare analytics learners") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        AccessFact(icon: "globe", title: "Public audience", detail: "Anyone who downloads the app can open the dashboards, tools, reports, integration examples, and architecture references.")
+                        AccessFact(icon: "person.crop.circle.badge.xmark", title: "No organization restriction", detail: "The app is not limited to one company, client, hospital, partner, employee group, or contractor group.")
+                        AccessFact(icon: "lock.open", title: "No account required", detail: "Users do not need an invitation, approval, pre-registration, or enterprise login to use the included functionality.")
+                    }
+                }
+
+                SectionCard(title: "Business model", subtitle: "No paid digital content is unlocked in the app") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        AccessFact(icon: "creditcard", title: "No in-app purchases", detail: "There are no subscriptions, paid accounts, paid feature tiers, or externally purchased digital content in this build.")
+                        AccessFact(icon: "doc.text.magnifyingglass", title: "Educational sample data", detail: "All visible dashboards use sample, non-production healthcare analytics scenarios for demonstration and learning.")
+                        AccessFact(icon: "shippingbox", title: "No enterprise service sale", detail: "The app does not sell enterprise services to single users, consumers, families, or organizations inside the app.")
+                    }
+                }
+
+                SectionCard(title: "Included functionality", subtitle: "What a reviewer can try immediately") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        AccessFact(icon: "chart.xyaxis.line", title: "Dashboards and charts", detail: "Explore KPIs, trend lines, active alerts, cohorts, patient summaries, and governance controls.")
+                        AccessFact(icon: "slider.horizontal.3", title: "Interactive tools", detail: "Estimate readmission risk, score dataset quality, map healthcare codes, and assemble report sections.")
+                        AccessFact(icon: "point.3.connected.trianglepath.dotted", title: "Interoperability reference", detail: "Review FHIR, HL7, warehouse, terminology, and architecture mappings used by modern health analytics teams.")
+                    }
+                }
+
+                SectionHeader(title: "Architecture reference", subtitle: "Domain-to-app mapping remains available for technical reviewers")
+
+                VStack(spacing: 12) {
+                    ForEach(workbench.architectureMappings.prefix(6)) { mapping in
+                        ArchitectureMappingCard(mapping: mapping)
+                    }
+                }
+            }
+            .padding(20)
+        }
+        .accessibilityIdentifier("access-screen")
+        .workbenchBackground()
+        .navigationTitle("Access")
     }
 }
 
@@ -813,6 +994,98 @@ private struct StatusPill: View {
             .background(color.opacity(0.15))
             .foregroundStyle(color)
             .clipShape(Capsule())
+    }
+}
+
+private struct SliderControl: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let format: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(String(format: format, value))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.teal)
+            }
+
+            Slider(value: $value, in: range, step: 1)
+                .tint(.cyan)
+        }
+    }
+}
+
+private struct ResultBand: View {
+    let title: String
+    let detail: String
+    let color: Color
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(color)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(color)
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(color.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+private struct ReportLine: View {
+    let number: Int
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("\(number)")
+                .font(.caption.bold())
+                .foregroundStyle(.black)
+                .frame(width: 24, height: 24)
+                .background(.cyan)
+                .clipShape(Circle())
+
+            Text(title)
+                .font(.subheadline)
+        }
+    }
+}
+
+private struct AccessFact: View {
+    let icon: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(.teal)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

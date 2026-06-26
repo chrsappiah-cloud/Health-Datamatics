@@ -15,8 +15,10 @@ struct Health_DatamaticsTests {
 
         #expect(workbench.title == "HealthInformaticsIQ")
         #expect(workbench.kpis.count == 4)
-        #expect(workbench.cohorts.count == 3)
-        #expect(workbench.patients.count == 3)
+        #expect(workbench.cohorts.count >= 6)
+        #expect(workbench.patients.count >= 6)
+        #expect(workbench.qualityChecks.count >= 6)
+        #expect(workbench.reports.count >= 5)
         #expect(workbench.qualitySnapshot.overallScore > 80)
         #expect(workbench.governanceControls.count == 3)
     }
