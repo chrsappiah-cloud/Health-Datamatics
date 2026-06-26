@@ -1,0 +1,3 @@
+Health-Datamatics is a healthcare analytics and informatics workbench prototype. The current build uses bundled/sample analytics data and does not require a login to review the dashboard, patient, quality, insights, reports, integrations, or architecture screens.
+
+The app is not intended to diagnose, treat, or provide emergency medical guidance. Recommendations are explainable analytics outputs and include supporting rationale and disclaimers. Any production deployment should be connected only to authorized healthcare systems and governed by the deploying organization's privacy, consent, and security controls.
